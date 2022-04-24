@@ -75,10 +75,11 @@ class subtitles:
                 self.write_subtitle(i,file)
 
     @staticmethod
-    def find_offset(time_standard,time_offset):
+    def find_offset(time_standard,time_offset)->datetime.timedelta:
         date = datetime.date(1, 1, 1)
         datetime1 = datetime.datetime.combine(date, time_standard)
         datetime2 = datetime.datetime.combine(date, time_offset)
+    
         return datetime1 - datetime2
 
 
@@ -90,17 +91,26 @@ class subtitles:
 
     def split(self,split_time:datetime.time,split_file_1:str,split_file_2:str,resetNumbers:bool=False,reWriteTime:datetime.time=datetime.time()):
         flag= 0
+        offset_flag =0
         with open(split_file_1,"w") as file:
             while 1:
-                #print(self.subtitle[flag].start_time , split_time)
+                
                 if self.subtitle[flag].start_time > split_time:
                     break
                 self.write_subtitle(obj=self.subtitle[flag],file_ptr=file)
+                
+                if self.subtitle[flag].start_time  > self.convert(int(self.find_offset(split_time,reWriteTime).total_seconds())):
+                    offset_flag+=1
                 flag+=1
-        
+
+        split_time =self.convert(int(self.find_offset(split_time,reWriteTime).total_seconds()))
+
+        flag =flag-offset_flag
+      
         count_range =iter(range(1,self.segments-flag+2))
         with open(split_file_2,"w") as file:
                 for i in range(flag,self.segments):
+                    print(self.subtitle[i])
                     self.write_subtitle(obj=self.subtitle[i],file_ptr=file,resetNumbers=resetNumbers,count=count_range,offset=split_time)
     @staticmethod
     def getvideoduration(filename):
@@ -116,14 +126,7 @@ class subtitles:
         seconds %= 60
         return datetime.time(hour=hour,minute=minutes,second=seconds)
 
-    def split_by_video(self,filename,split_file_1:str,split_file_2:str,resetNumbers:bool=False):
+    def split_by_video(self,filename,split_file_1:str,split_file_2:str,resetNumbers:bool=False,reWriteTime:datetime.time=datetime.time()):
         split_time = self.convert(self.getvideoduration(filename))
-        self.split(split_time,split_file_1,split_file_2,resetNumbers)
-
-
-
-
-
-
-
+        self.split(split_time,split_file_1,split_file_2,resetNumbers,reWriteTime)
 
